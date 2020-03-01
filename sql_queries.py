@@ -1,52 +1,114 @@
-# DROP TABLES
-
-songplay_table_drop = ""
-user_table_drop = ""
-song_table_drop = ""
-artist_table_drop = ""
-time_table_drop = ""
+table_names = ('songs', 'artists', 'time', 'users', 'songplays')
 
 # CREATE TABLES
 
-songplay_table_create = ("""
-""")
+song_table_create = """
+CREATE TABLE IF NOT EXISTS songs (
+  song_id VARCHAR(64) PRIMARY KEY,
+  title VARCHAR,
+  artist_id VARCHAR,
+  duration REAL,
+  year SMALLINT
+);
+"""
 
-user_table_create = ("""
-""")
+artist_table_create = """
+CREATE TABLE IF NOT EXISTS artists (
+  artist_id VARCHAR(64) PRIMARY KEY,
+  artist_name VARCHAR,
+  artist_location VARCHAR,
+  artist_latitude REAL,
+  artist_longitude REAL
+);
+"""
 
-song_table_create = ("""
-""")
+time_table_create = """
+CREATE TABLE IF NOT EXISTS time (
+  timestamp TIMESTAMP WITH TIME ZONE PRIMARY KEY,
+  year SMALLINT,
+  month SMALLINT,
+  day SMALLINT,
+  hour SMALLINT,
+  weekofyear SMALLINT,
+  weekday SMALLINT
+);
+"""
 
-artist_table_create = ("""
-""")
+user_table_create = """
+CREATE TABLE IF NOT EXISTS users (
+  user_id INTEGER PRIMARY KEY,
+  first_name VARCHAR,
+  last_name VARCHAR,
+  gender CHAR(1),
+  level CHAR(4)
+);
+"""
+# gender = "M" or "F"
+# level = "free" or "paid"
 
-time_table_create = ("""
-""")
+songplay_table_create = """
+CREATE TABLE IF NOT EXISTS songplays (
+  songplay_id SERIAL PRIMARY KEY,
+  timestamp TIMESTAMP WITH TIME ZONE,
+  song_id VARCHAR(64),
+  artist_id VARCHAR(64),
+  user_id INTEGER,
+  session_id INTEGER,
+  level CHAR(4),
+  location VARCHAR,
+  user_agent VARCHAR
+);
+"""
 
 # INSERT RECORDS
 
-songplay_table_insert = ("""
-""")
+SONG_TABLE_INSERT = """
+INSERT INTO songs (song_id, title, artist_id, duration, year)
+VALUES (%s, %s, %s, %s, %s)
+ON CONFLICT (song_id) DO NOTHING;
+"""
 
-user_table_insert = ("""
-""")
+ARTIST_TABLE_INSERT = """
+INSERT INTO artists (artist_id, artist_name, artist_location, artist_latitude,
+                     artist_longitude)
+VALUES (%s, %s, %s, %s, %s)
+ON CONFLICT (artist_id) DO NOTHING;
+"""
 
-song_table_insert = ("""
-""")
+TIME_TABLE_INSERT = """
+INSERT INTO time (timestamp, year, month, day, hour, weekofyear, weekday)
+VALUES (%s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (timestamp) DO NOTHING;
+"""
 
-artist_table_insert = ("""
-""")
+USER_TABLE_INSERT = """
+INSERT INTO users (user_id, first_name, last_name, gender, level)
+VALUES (%s, %s, %s, %s, %s)
+ON CONFLICT (user_id) DO NOTHING;
+"""
 
-
-time_table_insert = ("""
-""")
+SONGPLAY_TABLE_INSERT = """
+INSERT INTO songplays (timestamp, song_id, artist_id, user_id, session_id,
+                       level, location, user_agent)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+"""
 
 # FIND SONGS
 
-song_select = ("""
-""")
+SONG_SELECT = """
+SELECT songs.song_id, songs.artist_id
+FROM songs
+INNER JOIN artists ON artists.artist_id = songs.artist_id
+WHERE
+      songs.title = %s
+  AND artists.artist_name = %s
+  AND songs.duration = %s;
+"""
 
 # QUERY LISTS
 
-create_table_queries = [songplay_table_create, user_table_create, song_table_create, artist_table_create, time_table_create]
-drop_table_queries = [songplay_table_drop, user_table_drop, song_table_drop, artist_table_drop, time_table_drop]
+CREATE_TABLE_QUERIES = [song_table_create, artist_table_create,
+                        time_table_create, user_table_create,
+                        songplay_table_create]
+DROP_TABLE_QUERIES = [f'DROP TABLE IF EXISTS {table:s}'
+                      for table in table_names]

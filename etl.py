@@ -1,90 +1,196 @@
-import os
 import glob
-import psycopg2
+import os
+from typing import List
+
 import pandas as pd
-from sql_queries import *
+import psycopg2
+from numpy import int64
+from psycopg2.extensions import connection, cursor
+
+from db_values import HOST, DBNAME, USER, PASSWORD
+from sql_queries import (SONG_TABLE_INSERT, ARTIST_TABLE_INSERT,
+                         TIME_TABLE_INSERT, USER_TABLE_INSERT, SONG_SELECT,
+                         SONGPLAY_TABLE_INSERT)
+
+# To avoid `psycopg2.ProgrammingError: can't adapt type 'numpy.int64'` when
+# executing the INSERT command:
+psycopg2.extensions.register_adapter(int64, psycopg2._psycopg.AsIs)
 
 
-def process_song_file(cur, filepath):
-    # open song file
-    df = 
+def process_song_file(cur: cursor,
+                      filepath: str,
+                      song_table_insert: str = SONG_TABLE_INSERT,
+                      artist_table_insert: str = ARTIST_TABLE_INSERT):
+    """
+    Read JSON file and insert data into songs and artists dimensional tables.
 
-    # insert song record
-    song_data = 
+    Parameters
+    ----------
+    cur : psycopg2.extensions.cursor
+        Database cursor.
+    filepath : str
+        Path of the JSON file.
+    song_table_insert : str, optional
+        INSERT statement.
+    artist_table_insert : str, optional
+        INSERT statement.
+
+    Returns
+    -------
+    None
+    """
+    # Read song file
+    df = pd.read_json(filepath, lines=True)
+
+    # All columns will be used below, except "num_songs", which seems to be
+    # always equal to 1.
+
+    # Insert song record
+    song_data = (df
+                 .loc[0, ['song_id', 'title', 'artist_id', 'duration', 'year']]
+                 .values.tolist())
     cur.execute(song_table_insert, song_data)
-    
-    # insert artist record
-    artist_data = 
+
+    # Insert artist record
+    artist_data = (df
+                   .loc[0, ['artist_id', 'artist_name', 'artist_location',
+                            'artist_latitude', 'artist_longitude']]
+                   .values.tolist())
     cur.execute(artist_table_insert, artist_data)
 
 
-def process_log_file(cur, filepath):
-    # open log file
-    df = 
+def process_log_file(cur, filepath: str):
+    """
+    Read JSON file and insert data into time and users dimensional tables, and
+    into songplays fact table.
 
-    # filter by NextSong action
-    df = 
+    Parameters
+    ----------
+    cur : psycopg2.extensions.cursor
+        Database cursor.
+    filepath : str
+        Path of the JSON file.
 
-    # convert timestamp column to datetime
-    t = 
-    
-    # insert time data records
-    time_data = 
-    column_labels = 
-    time_df = 
+    Returns
+    -------
+    None
+    """
+    # Open log file
+    df = pd.read_json(filepath, lines=True)
 
-    for i, row in time_df.iterrows():
-        cur.execute(time_table_insert, list(row))
+    # Columns that are not used:
+    # - "auth" (e.g., "Logged In")
+    # - "itemInSession" (e.g., 0, 1, 2, ...)
+    # - "method" (e.g., "GET", "PUT")
+    # - "registration" (e.g., 1540919166796)
+    # - "status" (e.g., 200)
 
-    # load user table
-    user_df = 
+    # Filter by NextSong action
+    df = df.loc[df['page'] == 'NextSong', :]
 
-    # insert user records
-    for i, row in user_df.iterrows():
-        cur.execute(user_table_insert, row)
+    # Convert timestamp column to datetime
+    t: pd.Series = pd.to_datetime(df['ts'], utc=True, unit='ms')
 
-    # insert songplay records
+    # Insert time data records
+    time_data = (t, t.dt.year, t.dt.month, t.dt.day, t.dt.hour,
+                 t.dt.weekofyear, t.dt.weekday)
+    column_labels = ('timestamp', 'year', 'month', 'day', 'hour', 'weekofyear',
+                     'weekday')
+    time_df = pd.DataFrame(dict(zip(column_labels, time_data)))
+
+    for _, row in time_df.iterrows():
+        cur.execute(TIME_TABLE_INSERT, row)
+
+    # Load user table
+    user_df = df.loc[:, ['userId', 'firstName', 'lastName', 'gender', 'level']]
+
+    # Insert user records
+    for _, row in user_df.iterrows():
+        cur.execute(USER_TABLE_INSERT, row)
+
+    # Insert songplay records
     for index, row in df.iterrows():
-        
-        # get songid and artistid from song and artist tables
-        cur.execute(song_select, (row.song, row.artist, row.length))
+
+        # Get song_id and artist_id from song and artist tables
+        cur.execute(SONG_SELECT, (row.song, row.artist, row.length))
         results = cur.fetchone()
-        
+
         if results:
             songid, artistid = results
         else:
             songid, artistid = None, None
 
-        # insert songplay record
-        songplay_data = 
-        cur.execute(songplay_table_insert, songplay_data)
+        # Insert songplay record
+        songplay_data = ([t[index], songid, artistid] +
+                         row[['userId', 'sessionId', 'level', 'location',
+                              'userAgent']].to_list())
+        cur.execute(SONGPLAY_TABLE_INSERT, songplay_data)
 
 
-def process_data(cur, conn, filepath, func):
-    # get all files matching extension from directory
+def get_files(filepath: str, pattern: str = '*.json') -> List[str]:
+    """
+    Get all files matching pattern in directory.
+
+    Parameters
+    ----------
+    filepath : str
+        Path with files possibly under sub-folders.
+    pattern : str, optional
+        Pattern to search in file names.
+
+    Returns
+    -------
+    list[str]
+        List of full file names.
+    """
     all_files = []
     for root, dirs, files in os.walk(filepath):
-        files = glob.glob(os.path.join(root,'*.json'))
-        for f in files :
+        files = glob.glob(os.path.join(root, pattern))
+        for f in files:
             all_files.append(os.path.abspath(f))
 
-    # get total number of files found
-    num_files = len(all_files)
-    print('{} files found in {}'.format(num_files, filepath))
+    return all_files
 
-    # iterate over files and process
-    for i, datafile in enumerate(all_files, 1):
+
+def process_data(cur: cursor, filepath: str, func: callable) -> None:
+    """
+    Run `func` on all files under `filepath`.
+
+    Parameters
+    ----------
+    cur : psycopg2.extensions.cursor
+        Database cursor.
+    filepath : str
+        Path with files possibly under sub-folders.
+    func : callable
+        Function.
+
+    Returns
+    -------
+    None
+    """
+
+    # Get all files matching extension in directory
+    all_files = get_files(filepath)
+
+    # Get total number of files found
+    num_files = len(all_files)
+    print('{:,d} files found in "{}"'.format(num_files, filepath))
+
+    # Iterate over files and process
+    for i, datafile in enumerate(all_files, start=1):
         func(cur, datafile)
-        conn.commit()
         print('{}/{} files processed.'.format(i, num_files))
 
 
 def main():
-    conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
+    conn = psycopg2.connect(host=HOST, dbname=DBNAME, user=USER,
+                            password=PASSWORD)
+    conn.set_session(autocommit=True)
     cur = conn.cursor()
 
-    process_data(cur, conn, filepath='data/song_data', func=process_song_file)
-    process_data(cur, conn, filepath='data/log_data', func=process_log_file)
+    process_data(cur, filepath='data/song_data', func=process_song_file)
+    process_data(cur, filepath='data/log_data', func=process_log_file)
 
     conn.close()
 
