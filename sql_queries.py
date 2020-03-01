@@ -101,7 +101,7 @@ FROM songs
 INNER JOIN artists ON artists.artist_id = songs.artist_id
 WHERE
       songs.title = %s
-  AND artists.artist_name = %s
+  AND artists.name = %s
   AND songs.duration = %s;
 """
 
