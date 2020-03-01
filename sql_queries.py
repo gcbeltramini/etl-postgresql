@@ -15,10 +15,10 @@ CREATE TABLE IF NOT EXISTS songs (
 artist_table_create = """
 CREATE TABLE IF NOT EXISTS artists (
   artist_id VARCHAR(64) PRIMARY KEY,
-  artist_name VARCHAR,
-  artist_location VARCHAR,
-  artist_latitude DOUBLE PRECISION,
-  artist_longitude DOUBLE PRECISION
+  name VARCHAR,
+  location VARCHAR,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION
 );
 """
 
@@ -69,8 +69,7 @@ ON CONFLICT (song_id) DO NOTHING;
 """
 
 ARTIST_TABLE_INSERT = """
-INSERT INTO artists (artist_id, artist_name, artist_location, artist_latitude,
-                     artist_longitude)
+INSERT INTO artists (artist_id, name, location, latitude, longitude)
 VALUES (%s, %s, %s, %s, %s)
 ON CONFLICT (artist_id) DO NOTHING;
 """
