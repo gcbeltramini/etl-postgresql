@@ -92,10 +92,10 @@ def process_log_file(cur, filepath: str):
     t: pd.Series = pd.to_datetime(df['ts'], utc=True, unit='ms')
 
     # Insert time data records
-    time_data = (t, t.dt.year, t.dt.month, t.dt.day, t.dt.hour,
-                 t.dt.weekofyear, t.dt.weekday)
-    column_labels = ('timestamp', 'year', 'month', 'day', 'hour', 'weekofyear',
-                     'weekday')
+    time_data = (df['ts'], t, t.dt.hour, t.dt.day, t.dt.weekofyear, t.dt.month,
+                 t.dt.year, t.dt.weekday)
+    column_labels = ('start_time', 'timestamp', 'hour', 'day', 'week', 'month',
+                     'year', 'weekday')
     time_df = pd.DataFrame(dict(zip(column_labels, time_data)))
 
     for _, row in time_df.iterrows():

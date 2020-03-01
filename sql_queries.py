@@ -24,12 +24,13 @@ CREATE TABLE IF NOT EXISTS artists (
 
 time_table_create = """
 CREATE TABLE IF NOT EXISTS time (
-  timestamp TIMESTAMP WITH TIME ZONE PRIMARY KEY,
-  year SMALLINT,
-  month SMALLINT,
-  day SMALLINT,
+  start_time BIGINT PRIMARY KEY,
+  timestamp TIMESTAMP WITH TIME ZONE,
   hour SMALLINT,
-  weekofyear SMALLINT,
+  day SMALLINT,
+  week SMALLINT,
+  month SMALLINT,
+  year SMALLINT,
   weekday SMALLINT
 );
 """
@@ -75,9 +76,9 @@ ON CONFLICT (artist_id) DO NOTHING;
 """
 
 TIME_TABLE_INSERT = """
-INSERT INTO time (timestamp, year, month, day, hour, weekofyear, weekday)
-VALUES (%s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (timestamp) DO NOTHING;
+INSERT INTO time (start_time, timestamp, hour, day, week, month, year, weekday)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (start_time) DO NOTHING;
 """
 
 USER_TABLE_INSERT = """
