@@ -31,13 +31,35 @@ Install PostgreSQL:
 1. Install Homebrew (macOS): <http://brew.sh/>
 1. Install PostgreSQL (macOS): `brew install postgresql`
 
-Start service:
+Start service and create default user and database:
 
 1. Start PostgreSQL with [homebrew-services](https://github.com/Homebrew/homebrew-services):
 `brew services run postgresql`
     - Alternative: `pg_ctl -D /usr/local/var/postgres start`
     - `brew service start <service>` starts the `<service>` at login, while `brew services run` runs
     the `<service>` but doesn't start it at login (nor boot).
+1. Connect to default PostgreSQL database and create user:
+
+    ```bash
+    $ psql --dbname postgres
+    postgres=# \du
+    postgres=# CREATE ROLE student WITH LOGIN CREATEDB PASSWORD 'student';
+    postgres=# \du
+    postgres=# \quit
+    ```
+
+1. Connect to default PostgreSQL database as the new user and create database:
+
+    ```bash
+    $ psql --dbname postgres --username student
+    postgres=> \list
+    postgres=> CREATE DATABASE studentdb;
+    postgres=> \list
+    postgres=> GRANT ALL PRIVILEGES ON DATABASE studentdb TO student;
+    postgres=> \list
+    postgres=> \connect studentdb
+    postgres=> \quit
+    ```
 
 ## Run the ETL
 
@@ -48,7 +70,8 @@ python create_tables.py && python etl.py
 To debug: `psql --dbname sparkifydb --username student`
 
 If you receive the error `DETAIL:  There is 1 other session using the database.`, close all other
-connections, except the current one:
+connections, except the current one. Probably it is a jupyter notebook running, so restart it, or
+run this query:
 
 ```sql
 SELECT pid, pg_terminate_backend(pid)
@@ -63,13 +86,23 @@ WHERE datname = current_database() AND pid <> pg_backend_pid();
 
     ```bash
     $ psql --dbname sparkifydb
-   sparkifydb=# \dn+
-   sparkifydb=# DROP SCHEMA public CASCADE;
-   sparkifydb=# \dn+
-   sparkifydb=# CREATE SCHEMA public;
-   sparkifydb=# GRANT ALL ON SCHEMA public TO public;
-   sparkifydb=# COMMENT ON SCHEMA public IS 'standard public schema';
-   sparkifydb=# \dn+
+    sparkifydb=# \dn+
+    sparkifydb=# DROP SCHEMA public CASCADE;
+    sparkifydb=# \dn+
+    sparkifydb=# CREATE SCHEMA public;
+    sparkifydb=# GRANT ALL ON SCHEMA public TO public;
+    sparkifydb=# COMMENT ON SCHEMA public IS 'standard public schema';
+    sparkifydb=# \dn+
+    sparkifydb=# \quit
+    ```
+
+    Or remove the database and the user:
+
+    ```bash
+    $ psql --dbname postgres
+    postgres=# DROP DATABASE IF EXISTS sparkifydb;
+    postgres=# DROP USER student;
+    postgres=# \quit
     ```
 
 1. Stop the PostgreSQL service: `brew services stop postgresql`
