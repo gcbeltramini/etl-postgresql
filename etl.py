@@ -121,8 +121,8 @@ def process_log_file(cur, filepath: str):
             songid, artistid = None, None
 
         # Insert songplay record
-        songplay_data = ([t[index], songid, artistid] +
-                         row[['userId', 'sessionId', 'level', 'location',
+        songplay_data = ([df.loc[index, 'ts'], songid, artistid] +
+                         row[['userId', 'level', 'sessionId', 'location',
                               'userAgent']].values.tolist())
         cur.execute(SONGPLAY_TABLE_INSERT, songplay_data)
 

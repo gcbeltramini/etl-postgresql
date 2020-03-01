@@ -50,12 +50,12 @@ CREATE TABLE IF NOT EXISTS users (
 songplay_table_create = """
 CREATE TABLE IF NOT EXISTS songplays (
   songplay_id SERIAL PRIMARY KEY,
-  timestamp TIMESTAMP WITH TIME ZONE,
+  start_time BIGINT,
+  user_id INTEGER,
+  level CHAR(4),
   song_id VARCHAR(64),
   artist_id VARCHAR(64),
-  user_id INTEGER,
   session_id INTEGER,
-  level CHAR(4),
   location VARCHAR,
   user_agent VARCHAR
 );
@@ -88,8 +88,8 @@ ON CONFLICT (user_id) DO NOTHING;
 """
 
 SONGPLAY_TABLE_INSERT = """
-INSERT INTO songplays (timestamp, song_id, artist_id, user_id, session_id,
-                       level, location, user_agent)
+INSERT INTO songplays (start_time, song_id, artist_id, user_id, level,
+                       session_id, location, user_agent)
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
 """
 
