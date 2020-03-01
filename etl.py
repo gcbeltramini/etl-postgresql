@@ -180,7 +180,7 @@ def process_data(cur: cursor, filepath: str, func: callable) -> None:
     # Iterate over files and process
     for i, datafile in enumerate(all_files, start=1):
         func(cur, datafile)
-        print('{}/{} files processed.'.format(i, num_files))
+        print('{:03d}/{:03d} files processed'.format(i, num_files))
 
 
 def main():
