@@ -47,7 +47,7 @@ def process_song_file(cur: cursor,
 
     # Insert song record
     song_data = (df
-                 .loc[0, ['song_id', 'title', 'artist_id', 'duration', 'year']]
+                 .loc[0, ['song_id', 'title', 'artist_id', 'year', 'duration']]
                  .values.tolist())
     cur.execute(song_table_insert, song_data)
 

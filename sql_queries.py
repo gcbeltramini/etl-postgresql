@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS songs (
   song_id VARCHAR(64) PRIMARY KEY,
   title VARCHAR,
   artist_id VARCHAR,
-  duration DOUBLE PRECISION,
-  year SMALLINT
+  year SMALLINT,
+  duration DOUBLE PRECISION
 );
 """
 
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS songplays (
 # INSERT RECORDS
 
 SONG_TABLE_INSERT = """
-INSERT INTO songs (song_id, title, artist_id, duration, year)
+INSERT INTO songs (song_id, title, artist_id, year, duration)
 VALUES (%s, %s, %s, %s, %s)
 ON CONFLICT (song_id) DO NOTHING;
 """
