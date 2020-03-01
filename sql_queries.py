@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS songs (
   song_id VARCHAR(64) PRIMARY KEY,
   title VARCHAR,
   artist_id VARCHAR,
-  duration REAL,
+  duration DOUBLE PRECISION,
   year SMALLINT
 );
 """
@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS artists (
   artist_id VARCHAR(64) PRIMARY KEY,
   artist_name VARCHAR,
   artist_location VARCHAR,
-  artist_latitude REAL,
-  artist_longitude REAL
+  artist_latitude DOUBLE PRECISION,
+  artist_longitude DOUBLE PRECISION
 );
 """
 
