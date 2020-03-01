@@ -123,7 +123,7 @@ def process_log_file(cur, filepath: str):
         # Insert songplay record
         songplay_data = ([t[index], songid, artistid] +
                          row[['userId', 'sessionId', 'level', 'location',
-                              'userAgent']].to_list())
+                              'userAgent']].values.tolist())
         cur.execute(SONGPLAY_TABLE_INSERT, songplay_data)
 
 

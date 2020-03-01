@@ -32,22 +32,9 @@ def create_database(host: str = HOST,
     psycopg2.extensions.cursor, psycopg2.extensions.connection
         Database cursor and connection to `dbname`.
     """
-    # Connect to default PostgreSQL database, create user, close connection
-    DEFAULT_DBNAME = 'postgres'
-    conn = psycopg2.connect(host=host, dbname=DEFAULT_DBNAME)
-    conn.set_session(autocommit=True)
-    cur = conn.cursor()
-    try:
-        cur.execute(f'CREATE ROLE {user:s} WITH LOGIN CREATEDB '
-                    f'PASSWORD \'{password:s}\';')
-    except psycopg2.Error as e:
-        # Probably role already exists
-        # print(e)
-        pass
-    finally:
-        conn.close()
+    DEFAULT_DBNAME = 'studentdb'
 
-    # Connect to default PostgreSQL database as the new user
+    # Connect to default database
     conn = psycopg2.connect(host=host, dbname=DEFAULT_DBNAME, user=user,
                             password=password)
     conn.set_session(autocommit=True)
