@@ -7,29 +7,30 @@ CREATE TABLE IF NOT EXISTS songs (
   song_id VARCHAR(64) PRIMARY KEY,
   title VARCHAR,
   artist_id VARCHAR,
-  duration REAL,
-  year SMALLINT
+  year SMALLINT,
+  duration DOUBLE PRECISION
 );
 """
 
 artist_table_create = """
 CREATE TABLE IF NOT EXISTS artists (
   artist_id VARCHAR(64) PRIMARY KEY,
-  artist_name VARCHAR,
-  artist_location VARCHAR,
-  artist_latitude REAL,
-  artist_longitude REAL
+  name VARCHAR,
+  location VARCHAR,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION
 );
 """
 
 time_table_create = """
 CREATE TABLE IF NOT EXISTS time (
-  timestamp TIMESTAMP WITH TIME ZONE PRIMARY KEY,
-  year SMALLINT,
-  month SMALLINT,
-  day SMALLINT,
+  start_time BIGINT PRIMARY KEY,
+  timestamp TIMESTAMP WITH TIME ZONE,
   hour SMALLINT,
-  weekofyear SMALLINT,
+  day SMALLINT,
+  week SMALLINT,
+  month SMALLINT,
+  year SMALLINT,
   weekday SMALLINT
 );
 """
@@ -49,12 +50,12 @@ CREATE TABLE IF NOT EXISTS users (
 songplay_table_create = """
 CREATE TABLE IF NOT EXISTS songplays (
   songplay_id SERIAL PRIMARY KEY,
-  timestamp TIMESTAMP WITH TIME ZONE,
+  start_time BIGINT,
+  user_id INTEGER,
+  level CHAR(4),
   song_id VARCHAR(64),
   artist_id VARCHAR(64),
-  user_id INTEGER,
   session_id INTEGER,
-  level CHAR(4),
   location VARCHAR,
   user_agent VARCHAR
 );
@@ -63,22 +64,21 @@ CREATE TABLE IF NOT EXISTS songplays (
 # INSERT RECORDS
 
 SONG_TABLE_INSERT = """
-INSERT INTO songs (song_id, title, artist_id, duration, year)
+INSERT INTO songs (song_id, title, artist_id, year, duration)
 VALUES (%s, %s, %s, %s, %s)
 ON CONFLICT (song_id) DO NOTHING;
 """
 
 ARTIST_TABLE_INSERT = """
-INSERT INTO artists (artist_id, artist_name, artist_location, artist_latitude,
-                     artist_longitude)
+INSERT INTO artists (artist_id, name, location, latitude, longitude)
 VALUES (%s, %s, %s, %s, %s)
 ON CONFLICT (artist_id) DO NOTHING;
 """
 
 TIME_TABLE_INSERT = """
-INSERT INTO time (timestamp, year, month, day, hour, weekofyear, weekday)
-VALUES (%s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (timestamp) DO NOTHING;
+INSERT INTO time (start_time, timestamp, hour, day, week, month, year, weekday)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (start_time) DO NOTHING;
 """
 
 USER_TABLE_INSERT = """
@@ -88,8 +88,8 @@ ON CONFLICT (user_id) DO NOTHING;
 """
 
 SONGPLAY_TABLE_INSERT = """
-INSERT INTO songplays (timestamp, song_id, artist_id, user_id, session_id,
-                       level, location, user_agent)
+INSERT INTO songplays (start_time, song_id, artist_id, user_id, level,
+                       session_id, location, user_agent)
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
 """
 
@@ -101,7 +101,7 @@ FROM songs
 INNER JOIN artists ON artists.artist_id = songs.artist_id
 WHERE
       songs.title = %s
-  AND artists.artist_name = %s
+  AND artists.name = %s
   AND songs.duration = %s;
 """
 

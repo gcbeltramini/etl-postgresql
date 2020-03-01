@@ -47,7 +47,7 @@ def process_song_file(cur: cursor,
 
     # Insert song record
     song_data = (df
-                 .loc[0, ['song_id', 'title', 'artist_id', 'duration', 'year']]
+                 .loc[0, ['song_id', 'title', 'artist_id', 'year', 'duration']]
                  .values.tolist())
     cur.execute(song_table_insert, song_data)
 
@@ -92,10 +92,10 @@ def process_log_file(cur, filepath: str):
     t: pd.Series = pd.to_datetime(df['ts'], utc=True, unit='ms')
 
     # Insert time data records
-    time_data = (t, t.dt.year, t.dt.month, t.dt.day, t.dt.hour,
-                 t.dt.weekofyear, t.dt.weekday)
-    column_labels = ('timestamp', 'year', 'month', 'day', 'hour', 'weekofyear',
-                     'weekday')
+    time_data = (df['ts'], t, t.dt.hour, t.dt.day, t.dt.weekofyear, t.dt.month,
+                 t.dt.year, t.dt.weekday)
+    column_labels = ('start_time', 'timestamp', 'hour', 'day', 'week', 'month',
+                     'year', 'weekday')
     time_df = pd.DataFrame(dict(zip(column_labels, time_data)))
 
     for _, row in time_df.iterrows():
@@ -121,8 +121,8 @@ def process_log_file(cur, filepath: str):
             songid, artistid = None, None
 
         # Insert songplay record
-        songplay_data = ([t[index], songid, artistid] +
-                         row[['userId', 'sessionId', 'level', 'location',
+        songplay_data = ([df.loc[index, 'ts'], songid, artistid] +
+                         row[['userId', 'level', 'sessionId', 'location',
                               'userAgent']].values.tolist())
         cur.execute(SONGPLAY_TABLE_INSERT, songplay_data)
 
@@ -180,7 +180,7 @@ def process_data(cur: cursor, filepath: str, func: callable) -> None:
     # Iterate over files and process
     for i, datafile in enumerate(all_files, start=1):
         func(cur, datafile)
-        print('{}/{} files processed.'.format(i, num_files))
+        print('{:03d}/{:03d} files processed'.format(i, num_files))
 
 
 def main():
