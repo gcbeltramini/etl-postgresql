@@ -210,3 +210,131 @@ WHERE datname = current_database() AND pid <> pg_backend_pid();
     - Alternative: `pg_ctl -D /usr/local/var/postgres stop`
     - Check by listing all services managed by `brew services` (`postgresql` should be `stopped`):
     `brew services list`
+
+## Possible questions to ask
+
+Examples of queries:
+
+- Top 10 most common years when song were published:
+
+    ```sql
+    SELECT year, COUNT(*)
+    FROM songs
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10;
+    ```
+
+- Distribution of song duration:
+
+    ```sql
+    SELECT
+      percentile,
+      PERCENTILE_DISC(percentile) WITHIN GROUP (ORDER BY duration) AS duration
+    FROM songs, GENERATE_SERIES(0, 1, 0.25) AS percentile
+    GROUP BY 1;
+    ```
+
+- Top 10 most common first names and last names of users:
+    ```sql
+    SELECT first_name, COUNT(*)
+    FROM users
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10;
+
+    SELECT last_name, COUNT(*)
+    FROM users
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10;
+    ```
+
+- Top 10 most common artist locations:
+    ```sql
+    SELECT location, COUNT(*)
+    FROM artists
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10;
+    ```
+
+- Percentage of users per gender and level:
+    ```sql
+    SELECT
+      gender,
+      ROUND(100 * CAST(COUNT(*) AS DECIMAL) / (SELECT COUNT(*) FROM users), 2) AS percentage
+    FROM users
+    GROUP BY 1
+    ORDER BY 1;
+
+    SELECT
+      level,
+      ROUND(100 * CAST(COUNT(*) AS DECIMAL) / (SELECT COUNT(*) FROM users), 2) AS percentage
+    FROM users
+    GROUP BY 1
+    ORDER BY 1;
+
+    WITH per_gender_level AS (
+    SELECT gender, level, COUNT(*) AS count
+    FROM users
+    GROUP BY 1, 2),
+
+    per_gender AS (
+    SELECT gender, COUNT(*) AS count
+    FROM users
+    GROUP BY 1)
+
+    SELECT
+      per_gender_level.gender,
+      per_gender_level.level,
+      ROUND(100 * (CAST(per_gender_level.count AS DECIMAL) / per_gender.count), 2) AS percentage
+    FROM per_gender_level
+    INNER JOIN per_gender ON per_gender.gender = per_gender_level.gender
+    ORDER BY 1, 2;
+    ```
+
+- OLAP cube for users gender and level:
+
+    ```sql
+    SELECT gender, level, COUNT(*)
+    FROM users
+    WHERE gender IS NOT NULL AND level IS NOT NULL
+    GROUP BY CUBE (1, 2)
+    ORDER BY 1, 2;
+    ```
+
+- Description of number of songs per session:
+
+    ```sql
+    SELECT MIN(n_songs), AVG(n_songs), MAX(n_songs)
+    FROM (SELECT session_id, COUNT(*) AS n_songs
+          FROM songplays
+          GROUP BY 1) AS songs_per_session;
+    ```
+
+- Top 10 most active users:
+
+    ```sql
+    SELECT user_id, COUNT(*)
+    FROM songplays
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10;
+    ```
+
+- Top 10 most played song and artist:
+
+    ```sql
+    SELECT song_id, COUNT(*)
+    FROM songplays
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10;
+
+    SELECT artist_id, COUNT(*)
+    FROM songplays
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10;
+    ```
