@@ -13,8 +13,7 @@ def create_database(host: str = HOST,
                     dbname: str = DBNAME
                     ) -> Tuple[cursor, connection]:
     """
-    Create user `user` in the default PostgreSQL database and create fresh
-    database `dbname` as user `user`.
+    Create fresh ”database `dbname` as user `user`.
 
     Parameters
     ----------
@@ -80,7 +79,7 @@ def main():
     cur, conn = create_database()
 
     execute_queries(cur, queries=DROP_TABLE_QUERIES)
-    execute_queries(cur, CREATE_TABLE_QUERIES)
+    execute_queries(cur, queries=CREATE_TABLE_QUERIES)
     print('All tables were successfully created!')
 
     conn.close()
