@@ -24,8 +24,7 @@ CREATE TABLE IF NOT EXISTS artists (
 
 time_table_create = """
 CREATE TABLE IF NOT EXISTS time (
-  start_time BIGINT PRIMARY KEY,
-  timestamp TIMESTAMP WITH TIME ZONE,
+  start_time TIMESTAMP WITH TIME ZONE PRIMARY KEY,
   hour SMALLINT,
   day SMALLINT,
   week SMALLINT,
@@ -50,7 +49,7 @@ CREATE TABLE IF NOT EXISTS users (
 songplay_table_create = """
 CREATE TABLE IF NOT EXISTS songplays (
   songplay_id SERIAL PRIMARY KEY,
-  start_time BIGINT,
+  start_time TIMESTAMP WITH TIME ZONE,
   user_id INTEGER,
   level CHAR(4),
   song_id VARCHAR(64),
@@ -76,8 +75,8 @@ ON CONFLICT (artist_id) DO NOTHING;
 """
 
 TIME_TABLE_INSERT = """
-INSERT INTO time (start_time, timestamp, hour, day, week, month, year, weekday)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+INSERT INTO time (start_time, hour, day, week, month, year, weekday)
+VALUES (%s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (start_time) DO NOTHING;
 """
 
