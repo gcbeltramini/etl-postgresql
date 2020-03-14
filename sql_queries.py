@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS users (
 songplay_table_create = """
 CREATE TABLE IF NOT EXISTS songplays (
   songplay_id SERIAL PRIMARY KEY,
-  start_time TIMESTAMP WITH TIME ZONE,
-  user_id INTEGER,
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  user_id INTEGER NOT NULL,
   level CHAR(4),
   song_id VARCHAR(64),
   artist_id VARCHAR(64),
@@ -83,7 +83,7 @@ ON CONFLICT (start_time) DO NOTHING;
 USER_TABLE_INSERT = """
 INSERT INTO users (user_id, first_name, last_name, gender, level)
 VALUES (%s, %s, %s, %s, %s)
-ON CONFLICT (user_id) DO NOTHING;
+ON CONFLICT (user_id) DO UPDATE SET level = EXCLUDED.level
 """
 
 SONGPLAY_TABLE_INSERT = """
